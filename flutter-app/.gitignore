@@ -1,0 +1,56 @@
+## Flutter & Dart
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+build/
+
+## IDE files
+.vscode/
+.idea/
+*.iml
+
+## iOS
+ios/Flutter/Flutter.framework/
+ios/Flutter/Flutter.podspec
+ios/Flutter/App.framework/
+ios/Flutter/Flutter.podspec
+ios/Pods/
+ios/Podfile.lock
+
+## Android
+android/.gradle/
+android/local.properties
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+## Web
+web/.dart_tool/
+
+## Python
+venv/
+.venv/
+python/venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage*
+
+## Logs
+*.log
+
+## Data files (generated / large)
+*.sqlite
+*.db
+*.osm
+*.osm.pbf
+
+## OS files
+.DS_Store
