@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Permission for setting wallpaper via WallpaperManager API (Android-specific) -->
+    <!-- Ensures button functionality; app remains offline with no other network perms -->
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
+
     <application
         android:label="goa_live_wallpaper"
         android:name="${applicationName}"

@@ -61,23 +61,57 @@ class _VideoFeedPageState extends State<VideoFeedPage> {
     }
   }
 
-  // Basic functionality for liking and setting as live wallpaper
-  // Currently stubbed with UI feedback. For full Android live wallpaper:
-  // - Extend with MethodChannel to native code
-  // - Implement android/app/src/main/... WallpaperService for video
-  // - Handle video file path from assets/media/
-  // This keeps app offline and Android-focused
+  // Platform channel for communicating with native Android code to set wallpaper
+  // Channel name matches the one in MainActivity.kt
+  static const platform = MethodChannel('com.example.goa_live_wallpaper/wallpaper');
+
+  // Functionality for "Set Live Wallpaper" button (now at bottom with breathing space)
+  // Uses Android APIs via platform channel:
+  // - Extracts thumbnail (webp/image from assets/media/*-thumb.webp) for wallpaper
+  // - Calls native WallpaperManager.setStream() or similar for home/lock screen
+  // - Note: Full *video* live wallpaper requires custom WallpaperService (advanced native);
+  //   this uses thumb for immediate set via Android API, keeps offline
+  // - Breathing space ensured in UI overlay (padding 20px+)
+  // This is Android-specific and requires no internet
   Future<void> _setAsLiveWallpaper(Map<String, dynamic> video) async {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Liked! Setting "${video["data"]["dname"]}" as live wallpaper on Android'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-    // Future extension:
-    // const platform = MethodChannel('com.example.goa_live_wallpaper/wallpaper');
-    // await platform.invokeMethod('setLiveWallpaper', {'videoPath': video['data']['url']});
+
+    // Construct thumb asset path from JSON (e.g., 'media/xxx-thumb.webp' -> 'assets/media/xxx-thumb.webp')
+    // Thumbs are pre-extracted images suitable for wallpaper APIs
+    final String thumbUrl = video['data']['thumb'] as String;
+    final String thumbPath = 'assets/$thumbUrl';
+
+    try {
+      // Invoke native Android method
+      final bool success = await platform.invokeMethod<bool>(
+        'setLiveWallpaper',
+        {'thumbPath': thumbPath},  // Pass local asset path; native will load it
+      ) ?? false;
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? 'Set "${video["data"]["dname"]}" as live wallpaper on Android!'
+                : 'Failed to set wallpaper for "${video["data"]["dname"]}"',
+          ),
+          backgroundColor: success ? Colors.green : Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error setting wallpaper: ${e.message}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      // ignore: avoid_print for basic logging
+      print('Platform error: $e');
+    }
   }
 
   @override
@@ -189,30 +223,22 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
               child: VideoPlayer(_controller),
             ),
           ),
-          // Action buttons overlay (right side like IG)
+          // Like icon remains on right (subtle, like IG)
           Positioned(
-            bottom: 80,
+            bottom: 120,  // Adjusted up to make space for bottom button
             right: 20,
-            child: Column(
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.favorite,
-                    color: Colors.red,
-                    size: 40,
-                  ),
-                  onPressed: widget.onSetWallpaper,
-                ),
-                const Text(
-                  'Like & Set',
-                  style: TextStyle(color: Colors.white, backgroundColor: Colors.black54),
-                ),
-              ],
+            child: IconButton(
+              icon: const Icon(
+                Icons.favorite,
+                color: Colors.red,
+                size: 40,
+              ),
+              onPressed: widget.onSetWallpaper,
             ),
           ),
-          // Video name/info overlay
+          // Video name/info overlay (left side)
           Positioned(
-            bottom: 20,
+            bottom: 100,
             left: 20,
             child: Container(
               padding: const EdgeInsets.all(8),
@@ -220,6 +246,31 @@ class _VideoFeedItemState extends State<VideoFeedItem> {
               child: Text(
                 widget.videoData['data']['dname'] ?? 'Wallpaper',
                 style: const TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ),
+          ),
+          // New prominent "Set Live Wallpaper" button at bottom center
+          // With breathing space: padding/margins (20px from edges, elevated above play/info overlays)
+          // Calls the wallpaper setter for Android
+          Positioned(
+            bottom: 20,  // Bottom positioning with space
+            left: 20,
+            right: 20,   // Full width breathing from sides
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),  // Extra breathing space
+              child: ElevatedButton.icon(
+                onPressed: widget.onSetWallpaper,
+                icon: const Icon(Icons.wallpaper),
+                label: const Text(
+                  'Set Live Wallpaper',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),  // Internal padding for button
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                ),
               ),
             ),
           ),
