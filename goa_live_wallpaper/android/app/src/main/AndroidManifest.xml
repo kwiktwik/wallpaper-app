@@ -1,7 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Permission for setting wallpaper via WallpaperManager API (Android-specific) -->
-    <!-- Ensures button functionality; app remains offline with no other network perms -->
+    <!-- Permissions for wallpaper APIs (Android-specific, offline-only) -->
+    <!-- SET_WALLPAPER: For static image wallpaper -->
+    <!-- BIND_WALLPAPER: Required for custom live wallpaper service -->
+    <!-- No INTERNET or other network perms to ensure offline -->
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <uses-permission android:name="android.permission.BIND_WALLPAPER" />
 
     <application
         android:label="goa_live_wallpaper"
@@ -34,6 +37,24 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Custom service for video live wallpaper using Android WallpaperService API -->
+        <!-- Registered to enable "Video Live Wallpaper" option -->
+        <!-- Intent-filter and meta-data required by system for live WP chooser -->
+        <!-- Links to VideoLiveWallpaperService.kt and live_wallpaper.xml -->
+        <service
+            android:name=".VideoLiveWallpaperService"
+            android:label="Goa Video Live Wallpaper"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/live_wallpaper" />
+        </service>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

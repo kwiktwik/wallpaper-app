@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Metadata for video live wallpaper service.
+  Required by Android for live wallpaper registration.
+  Uses app icon for thumbnail preview in system chooser.
+  Description ties to app name; enables video live WP via API.
+-->
+<wallpaper xmlns:android="http://schemas.android.com/apk/res/android"
+    android:thumbnail="@mipmap/ic_launcher"
+    android:description="@string/app_name"
+    android:settingsActivity="com.example.goa_live_wallpaper.VideoLiveWallpaperService" />
