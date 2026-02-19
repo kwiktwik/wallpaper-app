@@ -30,6 +30,8 @@ class VideoLiveWallpaperService : WallpaperService() {
         }
 
         // Set up video when surface ready (MP4 from internal storage)
+        // Mute audio for wallpaper use (no sound on home/lock screen; per product requirement)
+        // Uses Android MediaPlayer API; keeps offline
         override fun onSurfaceCreated(holder: SurfaceHolder?) {
             super.onSurfaceCreated(holder)
             try {
@@ -39,8 +41,9 @@ class VideoLiveWallpaperService : WallpaperService() {
                     mediaPlayer?.setDataSource(videoPath)
                     mediaPlayer?.setSurface(holder?.surface)
                     mediaPlayer?.prepare()
+                    mediaPlayer?.setVolume(0f, 0f)  // Mute audio
                     mediaPlayer?.start()
-                    Log.d("VideoLiveWP", "Started live video wallpaper: $videoPath")
+                    Log.d("VideoLiveWP", "Started silent live video wallpaper: $videoPath")
                 }
             } catch (e: IOException) {
                 Log.e("VideoLiveWP", "Error setting up video live wallpaper", e)

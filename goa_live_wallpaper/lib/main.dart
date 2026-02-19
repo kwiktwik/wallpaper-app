@@ -66,11 +66,11 @@ class _VideoFeedPageState extends State<VideoFeedPage> {
   static const platform = MethodChannel('com.example.goa_live_wallpaper/wallpaper');
 
   // Functionality for "Set Live Wallpaper" button (at bottom with breathing space)
-  // Prompts user via Flutter dialog for:
-  // - Type: static (image/thumb via WallpaperManager) or video live (via custom WallpaperService)
-  // - Then delegates to native Android APIs for screen choice (home/lock/both via system chooser)
-  // Uses Android APIs: WallpaperManager + Intent.ACTION_CHANGE_LIVE_WALLPAPER for live
-  // Keeps offline (local assets); Android-only
+  // Simplified per product: Only prompt type (static/live) to avoid duplicate screen prompts
+  // - Native Android chooser (Intent.ACTION_CHANGE_LIVE_WALLPAPER) handles home/lock/both
+  // - Static: WallpaperManager API (thumb image)
+  // - Live: VideoLiveWallpaperService (MP4 + mute) via system picker
+  // Uses pure Android APIs; keeps offline/Android-only; no redundant dialogs
   // Breathing space in UI ensures button visibility
   Future<void> _setAsLiveWallpaper(Map<String, dynamic> video) async {
     if (!mounted) return;
@@ -82,7 +82,8 @@ class _VideoFeedPageState extends State<VideoFeedPage> {
     final String thumbPath = 'assets/$thumbUrl';
     final String dname = video['data']['dname'] ?? 'Wallpaper';
 
-    // Step 1: Flutter dialog to choose static vs video live wallpaper (per request)
+    // Only prompt for type (static vs video live); screen choice delegated to Android system chooser
+    // (avoids duplicate prompts in native)
     final wallpaperType = await showDialog<String>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
@@ -103,34 +104,9 @@ class _VideoFeedPageState extends State<VideoFeedPage> {
 
     if (wallpaperType == null || !mounted) return;  // User cancelled
 
-    // Step 2: Optional screen choice dialog (home/lock/both); native chooser will also prompt
-    final screenChoice = await showDialog<String>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Choose Screen'),
-        content: const Text('Where to set the wallpaper?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'home'),
-            child: const Text('Home Screen'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'lock'),
-            child: const Text('Lock Screen'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'both'),
-            child: const Text('Both'),
-          ),
-        ],
-      ),
-    );
-
-    if (screenChoice == null || !mounted) return;
-
     try {
-      // Invoke native Android method with choices + paths
-      // Native handles: static=WallpaperManager, live=system live chooser + service
+      // Invoke native with type + paths only (screen via system; defaults both where applicable)
+      // Native handles: static=WallpaperManager, live=service + chooser
       // Uses pure Android APIs; offline via assets/internal files
       final bool success = await platform.invokeMethod<bool>(
         'setLiveWallpaper',
@@ -138,7 +114,7 @@ class _VideoFeedPageState extends State<VideoFeedPage> {
           'videoPath': videoPath,
           'thumbPath': thumbPath,
           'type': wallpaperType,  // 'static' or 'live'
-          'screen': screenChoice,  // 'home', 'lock', 'both'
+          // 'screen' removed - system chooser handles (no duplicate)
         },
       ) ?? false;
 
@@ -147,7 +123,7 @@ class _VideoFeedPageState extends State<VideoFeedPage> {
         SnackBar(
           content: Text(
             success
-                ? 'Wallpaper set for "$dname" ($wallpaperType on $screenChoice screen)!'
+                ? 'Wallpaper set for "$dname" ($wallpaperType)!'
                 : 'Failed to set $wallpaperType wallpaper for "$dname"',
           ),
           backgroundColor: success ? Colors.green : Colors.red,
