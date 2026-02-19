@@ -7,5 +7,6 @@
 -->
 <wallpaper xmlns:android="http://schemas.android.com/apk/res/android"
     android:thumbnail="@mipmap/ic_launcher"
-    android:description="@string/app_name"
+    <!-- Fixed AAPT error: Use literal string instead of @string/app_name (missing in Flutter res/values; app_name derived from pubspec/android:label at build time) -->
+    android:description="Goa Live Wallpaper"
     android:settingsActivity="com.example.goa_live_wallpaper.VideoLiveWallpaperService" />
