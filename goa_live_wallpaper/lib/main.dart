@@ -105,7 +105,8 @@ class _VideoFeedPageState extends State<VideoFeedPage> {
     if (wallpaperType == null || !mounted) return;  // User cancelled
 
     try {
-      // Invoke native with type + paths only (screen via system; defaults both where applicable)
+      // Invoke native with type + paths + default screen (system chooser still handles final home/lock/both)
+      // Fixes param null error from simplification; native setWallpaper check passes
       // Native handles: static=WallpaperManager, live=service + chooser
       // Uses pure Android APIs; offline via assets/internal files
       final bool success = await platform.invokeMethod<bool>(
@@ -114,7 +115,7 @@ class _VideoFeedPageState extends State<VideoFeedPage> {
           'videoPath': videoPath,
           'thumbPath': thumbPath,
           'type': wallpaperType,  // 'static' or 'live'
-          // 'screen' removed - system chooser handles (no duplicate)
+          'screen': 'both',  // Default to avoid null; system chooser overrides/prompts (no Flutter dialog dup)
         },
       ) ?? false;
 

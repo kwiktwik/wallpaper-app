@@ -10,6 +10,7 @@ import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
+import android.util.Log
 import androidx.annotation.NonNull
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -63,11 +64,31 @@ class MainActivity: FlutterActivity() {
     }
 
     // Static image wallpaper using WallpaperManager API (from thumb)
+    // Fixed path: Try flutter_assets prefix (Flutter APK standard) with fallback for post-clean/rename consistency
+    // Added logging for debug (root cause of UNAVAILABLE error was asset open fail)
     private fun setStaticWallpaper(thumbPath: String, screen: String): Boolean {
-        // Copy/ load asset thumb (similar to prior)
-        val assetPath = "flutter_assets/$thumbPath"
         val assetManager = applicationContext.assets
-        val inputStream: InputStream = assetManager.open(assetPath)
+        val possiblePaths = listOf(
+            "flutter_assets/$thumbPath",  // Standard Flutter asset path in APK
+            "flutter_assets/assets/$thumbPath",  // Alt for 'assets/' prefix from Dart
+            thumbPath.removePrefix("assets/")   // Fallback direct
+        )
+        var inputStream: InputStream? = null
+        var assetPath = ""
+        for (p in possiblePaths) {
+            try {
+                inputStream = assetManager.open(p)
+                assetPath = p
+                Log.d("MainActivity", "Successfully opened static thumb asset: $assetPath")
+                break
+            } catch (e: IOException) {
+                Log.w("MainActivity", "Failed to open thumb path: $p")
+            }
+        }
+        if (inputStream == null) {
+            Log.e("MainActivity", "All thumb paths failed for: $thumbPath")
+            return false
+        }
         val bitmap: Bitmap = BitmapFactory.decodeStream(inputStream)
         inputStream.close()
 
@@ -85,6 +106,7 @@ class MainActivity: FlutterActivity() {
         } else {
             wallpaperManager.setBitmap(bitmap)
         }
+        Log.d("MainActivity", "Static wallpaper set successfully for thumb")
         return true
     }
 
@@ -119,13 +141,33 @@ class MainActivity: FlutterActivity() {
 
     // Helper: Copy asset video to internal storage (e.g., /data/data/.../files/media/xxx.mp4)
     // Ensures offline access by service (no assets direct); called for live WP
+    // Fixed path: Try multiple variants for flutter_assets/ prefix consistency (post-clean/rename)
+    // Added logging for debug (root cause of live fail was open fail)
     private fun copyAssetToInternalStorage(assetPath: String): File? {
+        val assetManager = applicationContext.assets
+        val possiblePaths = listOf(
+            "flutter_assets/$assetPath",  // Standard
+            "flutter_assets/assets/$assetPath",  // Alt from Dart 'assets/'
+            assetPath.removePrefix("assets/")   // Direct fallback
+        )
+        var inputStream: InputStream? = null
+        var usedPath = ""
+        for (p in possiblePaths) {
+            try {
+                inputStream = assetManager.open(p)
+                usedPath = p
+                Log.d("MainActivity", "Successfully opened video asset for copy: $usedPath")
+                break
+            } catch (e: IOException) {
+                Log.w("MainActivity", "Failed video asset path: $p")
+            }
+        }
+        if (inputStream == null) {
+            Log.e("MainActivity", "All video paths failed for: $assetPath")
+            return null
+        }
         return try {
             val cleanPath = assetPath.removePrefix("assets/")  // e.g., media/xxx.mp4
-            val assetFullPath = "flutter_assets/$assetPath"
-            val assetManager = applicationContext.assets
-            val inputStream: InputStream = assetManager.open(assetFullPath)
-
             // Target internal file (persistent, private)
             val internalDir = applicationContext.filesDir
             val targetFile = File(internalDir, cleanPath)
@@ -135,6 +177,7 @@ class MainActivity: FlutterActivity() {
             inputStream.copyTo(outputStream)
             inputStream.close()
             outputStream.close()
+            Log.d("MainActivity", "Video copied to internal: ${targetFile.absolutePath}")
             targetFile
         } catch (e: IOException) {
             e.printStackTrace()
