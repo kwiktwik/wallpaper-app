@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Standard Flutter app name string (for compatibility) -->
+    <string name="app_name">goa_live_wallpaper</string>
+    <!-- Custom description for live_wallpaper.xml to resolve AAPT @string reference error -->
+    <!-- Matches android:description in XML; ensures valid resource linking for wallpaper service -->
+    <string name="goa_live_wallpaper_description">Goa Live Wallpaper</string>
+</resources>

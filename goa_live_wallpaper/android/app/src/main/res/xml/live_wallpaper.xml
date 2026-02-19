@@ -1,12 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
-  Metadata for video live wallpaper service.
-  Required by Android for live wallpaper registration.
-  Uses app icon for thumbnail preview in system chooser.
-  Description ties to app name; enables video live WP via API.
--->
 <wallpaper xmlns:android="http://schemas.android.com/apk/res/android"
     android:thumbnail="@mipmap/ic_launcher"
-    <!-- Fixed AAPT error: Use literal string instead of @string/app_name (missing in Flutter res/values; app_name derived from pubspec/android:label at build time) -->
-    android:description="Goa Live Wallpaper"
+    android:description="@string/goa_live_wallpaper_description"
     android:settingsActivity="com.example.goa_live_wallpaper.VideoLiveWallpaperService" />
