@@ -1,1 +1,37 @@
 python/
+
+# Large media files - should not be in git
+data/media/*.mp4
+data/media/**/*.mp4
+*.mp4
+*.pbf
+
+# Build files
+build/
+*.apk
+*.aab
+*.ipa
+*.dSYM.zip
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Feed files
+feed_*.json
